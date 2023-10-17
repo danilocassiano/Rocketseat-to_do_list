@@ -1,5 +1,6 @@
 package br.com.danilocassiano.to_do_list.user;
 
+import at.favre.lib.crypto.bcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -19,16 +20,22 @@ public class UserController {
 
     @PostMapping("/")
 
-    public ResponseEntity create(@RequestBody UserModel userModel){
+    public ResponseEntity create(@RequestBody UserModel userModel) {
 
-       var user = this.userRepository.findByUsername(userModel.getUsername());
+        var user = this.userRepository.findByUsername(userModel.getUsername());
 
-       if(user != null){
-           return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body("Usuario já existe.");
-       }
+        if (user != null) {
+            // Mensagem de erro
+            // Status Code
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Usuário já existe");
+        }
+
+        var passwordHashred = BCrypt.withDefaults()
+                .hashToString(12, userModel.getPassword().toCharArray());
+
+        userModel.setPassword(passwordHashred);
 
         var userCreated = this.userRepository.save(userModel);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(userCreated);
+        return ResponseEntity.status(HttpStatus.OK).body(userCreated);
     }
 }
